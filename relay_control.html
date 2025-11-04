@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP32 Firebase Relay Control</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #121212;
+      color: white;
+      text-align: center;
+      padding: 40px;
+    }
+    .login-box, .control-box {
+      background: #1e1e1e;
+      padding: 30px;
+      border-radius: 15px;
+      display: inline-block;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+      margin-top: 50px;
+      width: 320px;
+    }
+    input {
+      padding: 10px;
+      width: 85%;
+      margin: 10px 0;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+    }
+    button {
+      padding: 10px 25px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin-top: 25px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    /* Toggle switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 80px;
+      height: 40px;
+      margin-top: 35px;
+      margin-bottom: 30px;
+    }
+    .switch input { display: none; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #555;
+      transition: .4s;
+      border-radius: 40px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 32px; width: 32px;
+      left: 4px; bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #00b894;
+      box-shadow: 0 0 10px #00b894;
+    }
+    input:checked + .slider:before {
+      transform: translateX(40px);
+    }
+
+    #status {
+      font-size: 22px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Login Box -->
+  <div class="login-box" id="loginBox">
+    <h2>🔐 Admin Login</h2>
+    <input type="text" id="username" placeholder="Username"><br>
+    <input type="password" id="password" placeholder="Password"><br>
+    <button onclick="login()">Login</button>
+    <p id="loginError" style="color:red; margin-top:10px;"></p>
+  </div>
+
+  <!-- Control Box -->
+  <div class="control-box" id="controlBox" style="display:none;">
+    <h2>⚡ ESP32 Relay Control</h2>
+    <p id="status">Loading...</p>
+    <label class="switch">
+      <input type="checkbox" id="relayToggle">
+      <span class="slider"></span>
+    </label><br>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <script type="module">
+    // Import Firebase SDK
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+    import { getDatabase, ref, onValue, set } 
+      from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAUm8E5LOgFK1WJGqMuwInTv740h2F6rgY",
+      authDomain: "simple-relay-control.firebaseapp.com",
+      databaseURL: "https://simple-relay-control-default-rtdb.firebaseio.com",
+      projectId: "simple-relay-control",
+      storageBucket: "simple-relay-control.firebasestorage.app",
+      messagingSenderId: "276159954213",
+      appId: "1:276159954213:web:49a759a036c73599cdaecc",
+      measurementId: "G-KD2TQZ2Z0T"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const relayRef = ref(db, "relay");
+
+    const statusText = document.getElementById("status");
+    const relayToggle = document.getElementById("relayToggle");
+
+    // Login
+    window.login = function() {
+      const user = document.getElementById("username").value;
+      const pass = document.getElementById("password").value;
+
+      if (user === "admin" && pass === "okyopogi") {
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("controlBox").style.display = "inline-block";
+      } else {
+        document.getElementById("loginError").innerText = "Invalid username or password.";
+      }
+    };
+
+    // Logout
+    window.logout = function() {
+      document.getElementById("controlBox").style.display = "none";
+      document.getElementById("loginBox").style.display = "inline-block";
+      document.getElementById("username").value = "";
+      document.getElementById("password").value = "";
+      document.getElementById("loginError").innerText = "";
+    };
+
+    // Sync Firebase Relay State
+    onValue(relayRef, (snapshot) => {
+      const state = snapshot.val();
+      relayToggle.checked = state;
+      statusText.innerHTML = state ? "Relay Status: ✅ ON" : "Relay Status: ❌ OFF";
+    });
+
+    // Update Firebase when toggled
+    relayToggle.addEventListener("change", () => {
+      const newState = relayToggle.checked;
+      set(relayRef, newState);
+    });
+  </script>
+
+</body>
+</html>
