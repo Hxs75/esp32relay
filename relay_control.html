@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ESP32 Firebase Relay Control</title>
   <style>
@@ -43,8 +43,6 @@
     button:hover {
       background-color: #0056b3;
     }
-
-    /* Toggle switch */
     .switch {
       position: relative;
       display: inline-block;
@@ -78,7 +76,6 @@
     input:checked + .slider:before {
       transform: translateX(40px);
     }
-
     #status {
       font-size: 22px;
       margin-top: 20px;
@@ -87,7 +84,6 @@
 </head>
 <body>
 
-  <!-- Login Box -->
   <div class="login-box" id="loginBox">
     <h2>🔐 Admin Login</h2>
     <input type="text" id="username" placeholder="Username"><br>
@@ -96,7 +92,6 @@
     <p id="loginError" style="color:red; margin-top:10px;"></p>
   </div>
 
-  <!-- Control Box -->
   <div class="control-box" id="controlBox" style="display:none;">
     <h2>⚡ ESP32 Relay Control</h2>
     <p id="status">Loading...</p>
@@ -107,13 +102,12 @@
     <button onclick="logout()">Logout</button>
   </div>
 
-  <script type="module">
-    // Import Firebase SDK
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-    import { getDatabase, ref, onValue, set } 
-      from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+  <!-- ✅ Firebase CDN SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
-    // Firebase Configuration
+  <script>
+    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAUm8E5LOgFK1WJGqMuwInTv740h2F6rgY",
       authDomain: "simple-relay-control.firebaseapp.com",
@@ -125,16 +119,15 @@
       measurementId: "G-KD2TQZ2Z0T"
     };
 
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const relayRef = ref(db, "relay");
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const relayRef = db.ref("relay");
 
     const statusText = document.getElementById("status");
     const relayToggle = document.getElementById("relayToggle");
 
     // Login
-    window.login = function() {
+    function login() {
       const user = document.getElementById("username").value;
       const pass = document.getElementById("password").value;
 
@@ -144,30 +137,28 @@
       } else {
         document.getElementById("loginError").innerText = "Invalid username or password.";
       }
-    };
+    }
 
     // Logout
-    window.logout = function() {
+    function logout() {
       document.getElementById("controlBox").style.display = "none";
       document.getElementById("loginBox").style.display = "inline-block";
       document.getElementById("username").value = "";
       document.getElementById("password").value = "";
       document.getElementById("loginError").innerText = "";
-    };
+    }
 
-    // Sync Firebase Relay State
-    onValue(relayRef, (snapshot) => {
+    // Firebase Relay Sync
+    relayRef.on("value", (snapshot) => {
       const state = snapshot.val();
       relayToggle.checked = state;
       statusText.innerHTML = state ? "Relay Status: ✅ ON" : "Relay Status: ❌ OFF";
     });
 
-    // Update Firebase when toggled
     relayToggle.addEventListener("change", () => {
       const newState = relayToggle.checked;
-      set(relayRef, newState);
+      relayRef.set(newState);
     });
   </script>
-
 </body>
 </html>
